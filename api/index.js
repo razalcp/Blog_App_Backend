@@ -34,6 +34,8 @@ app.use(cors({
       const allowedOrigins = [
         process.env.FRONTEND_URL || 'https://localhost:3000',
         'http://localhost:3000', // for local development
+        'https://blog-app-backend-alpha-two.vercel.app', // Your backend domain
+        'https://harmonious-raindrop-f734f5.netlify.app', // Your Netlify frontend domain
       ];
       
       if (allowedOrigins.indexOf(origin) === -1) {
