@@ -1,6 +1,7 @@
 const { validationResult } = require('express-validator');
 const Blog = require('../models/Blog');
 const Category = require('../models/Category');
+const { default: mongoose } = require('mongoose');
 
 const createBlog = async (req, res) => {
 
@@ -17,11 +18,26 @@ const createBlog = async (req, res) => {
 
     const { title, content, excerpt, category, tags, featuredImage, status } = req.body;
    
-    const categoryExists = await Category.findById(category);
-    if (!categoryExists) {
+    // Handle category as either ObjectId or string
+    let categoryObjectId;
+    if (mongoose.Types.ObjectId.isValid(category)) {
+      categoryObjectId = category;
+    } else {
+      // If it's a string, try to find category by name or use static categories
+      const categoryExists = await Category.findOne({ name: category });
+      if (categoryExists) {
+        categoryObjectId = categoryExists._id;
+      } else {
+        // If category not found, create a default one or use first category
+        const defaultCategory = await Category.findOne();
+        categoryObjectId = defaultCategory ? defaultCategory._id : null;
+      }
+    }
+    
+    if (!categoryObjectId) {
       return res.status(400).json({
         success: false,
-        message: 'Category not found'
+        message: 'Valid category required'
       });
     }
 
@@ -30,7 +46,7 @@ const createBlog = async (req, res) => {
       content,
       excerpt,
       author: req.user.id,
-      category,
+      category: categoryObjectId,
       tags: tags || [],
       featuredImage: featuredImage || '',
       status: status || 'draft',
